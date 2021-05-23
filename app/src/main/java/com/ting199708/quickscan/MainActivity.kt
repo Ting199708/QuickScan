@@ -45,9 +45,6 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this@MainActivity, "已完成實名登記", Toast.LENGTH_SHORT).show()
                     sendSMS(data.substring(5))
                     finish()
-                } else {
-//                    cameraSource.start(scanner.holder)
-                    Toast.makeText(this@MainActivity, "非簡訊實聯制QR code", Toast.LENGTH_SHORT).show()
                 }
                 taskHandler.removeCallbacksAndMessages(null)
             }
