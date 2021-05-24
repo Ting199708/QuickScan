@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
@@ -44,6 +45,9 @@ class MainActivity : AppCompatActivity() {
                     cameraSource.stop()
                     Toast.makeText(this@MainActivity, "已完成實名登記", Toast.LENGTH_SHORT).show()
                     sendSMS(data.substring(5))
+                    val openSMS = Intent(Intent.ACTION_VIEW)
+                    openSMS.data = Uri.parse("sms:1922")
+                    startActivity(openSMS)
                     finish()
                 }
                 taskHandler.removeCallbacksAndMessages(null)
