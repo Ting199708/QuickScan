@@ -2,6 +2,7 @@ package com.ting199708.quickscan
 
 import android.annotation.SuppressLint
 import android.app.PendingIntent
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -9,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.telephony.SmsManager
+import android.util.Log
 import android.view.SurfaceHolder
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -26,6 +28,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cameraSource: CameraSource
     private lateinit var detector: BarcodeDetector
     private lateinit var smsManager: SmsManager
+    private var errorToast: Toast? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,19 +42,23 @@ class MainActivity : AppCompatActivity() {
 
         val taskHandler = Handler()
         @SuppressLint("MissingPermission")
-        val runnable = object:Runnable{
-            override fun run() {
-                if (validData(data)) {
-                    cameraSource.stop()
-                    Toast.makeText(this@MainActivity, "已完成實名登記", Toast.LENGTH_SHORT).show()
-                    sendSMS(data.substring(5))
-                    val openSMS = Intent(Intent.ACTION_VIEW)
-                    openSMS.data = Uri.parse("sms:1922")
-                    startActivity(openSMS)
-                    finish()
+        val runnable = Runnable {
+            if (validData(data)) {
+                cameraSource.stop()
+                Toast.makeText(this@MainActivity, "已完成實名登記", Toast.LENGTH_SHORT).show()
+                sendSMS(data.substring(5))
+                val openSMS = Intent(Intent.ACTION_VIEW)
+                openSMS.data = Uri.parse("sms:1922")
+                startActivity(openSMS)
+                finish()
+            } else {
+                if (errorToast != null) {
+                    errorToast?.cancel()
                 }
-                taskHandler.removeCallbacksAndMessages(null)
+                errorToast = Toast.makeText(this@MainActivity, "非實聯制QR code", Toast.LENGTH_SHORT)
+                errorToast?.show()
             }
+            taskHandler.removeCallbacksAndMessages(null)
         }
 
         smsManager = SmsManager.getDefault()
@@ -71,6 +78,11 @@ class MainActivity : AppCompatActivity() {
         })
         cameraSource = CameraSource.Builder(this, detector).setRequestedPreviewSize(1024, 768)
                 .setRequestedFps(30f).setAutoFocusEnabled(true).build()
+        initSurfaceHolder()
+
+    }
+
+    fun initSurfaceHolder() {
         scanner.holder.addCallback(object: SurfaceHolder.Callback2 {
             override fun surfaceCreated(holder: SurfaceHolder) {
                 if (ContextCompat.checkSelfPermission(this@MainActivity, android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
@@ -107,9 +119,24 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        Log.e("onDestory", "onDestory")
         detector.release()
         cameraSource.stop()
         cameraSource.release()
+    }
+
+    override fun onPause() {
+        Log.e("onPause", "onPause")
+        cameraSource.stop()
+        super.onPause()
+    }
+
+    @SuppressLint("MissingPermission")
+    override fun onRestart() {
+        super.onRestart()
+        Log.e("onRestart", "onRestart")
+        initSurfaceHolder()
+//        cameraSource.start(scanner.holder)
     }
 
     fun validData(data: String): Boolean {
