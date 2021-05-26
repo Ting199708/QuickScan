@@ -12,6 +12,7 @@ import android.os.Handler
 import android.telephony.SmsManager
 import android.util.Log
 import android.view.SurfaceHolder
+import android.widget.NumberPicker
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
@@ -29,6 +30,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var detector: BarcodeDetector
     private lateinit var smsManager: SmsManager
     private var errorToast: Toast? = null
+    var peopleNum = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,9 +46,11 @@ class MainActivity : AppCompatActivity() {
         @SuppressLint("MissingPermission")
         val runnable = Runnable {
             if (validData(data)) {
+                var smsData = data.substring(5)
+                if (peopleNum > 1) smsData += " +$peopleNum"
                 cameraSource.stop()
                 Toast.makeText(this@MainActivity, "已完成實名登記", Toast.LENGTH_SHORT).show()
-                sendSMS(data.substring(5))
+                sendSMS(smsData)
                 val openSMS = Intent(Intent.ACTION_VIEW)
                 openSMS.data = Uri.parse("sms:1922")
                 startActivity(openSMS)
@@ -60,6 +64,17 @@ class MainActivity : AppCompatActivity() {
             }
             taskHandler.removeCallbacksAndMessages(null)
         }
+
+        numberPicker.setOnValueChangedListener { picker, oldVal, newVal ->
+            peopleNum = newVal
+        }
+        numberPicker.setOnScrollListener { view, scrollState ->  }
+        numberPicker.maxValue = 10
+        numberPicker.minValue = 1
+        numberPicker.value = 1
+        numberPicker.displayedValues = arrayOf("選擇同行人數(預設: 1)", "2", "3", "4", "5", "6", "7", "8", "9", "10")
+        numberPicker.wrapSelectorWheel = false
+        numberPicker.descendantFocusability = NumberPicker.FOCUS_BLOCK_DESCENDANTS
 
         smsManager = SmsManager.getDefault()
 
